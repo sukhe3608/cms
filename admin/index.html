@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>SetuNxt Blog Studio — Content Engine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/admin/app.css">
+</head>
+<body>
+
+<!-- Login Screen -->
+<main id="login" class="login" hidden>
+  <div class="login-bg-glow"></div>
+  <div class="login-bg-grid"></div>
+  <form id="loginForm" class="login-card" autocomplete="on">
+    <div class="login-header">
+      <div class="brand-badge">
+        <span class="brand-dot pulse"></span>
+        <span class="brand-text">SetuNxt Studio</span>
+      </div>
+      <h1>Content Studio</h1>
+      <p class="muted">Sign in with your admin credentials to compose, live-preview, and publish blog stories.</p>
+    </div>
+
+    <div class="field login-field">
+      <label for="username">Username or Email</label>
+      <div class="input-with-icon">
+        <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <input id="username" name="username" type="text" autocomplete="username" placeholder="e.g. admin or admin@setunxt.com" required autofocus>
+      </div>
+    </div>
+
+    <div class="field login-field">
+      <label for="password">Password</label>
+      <div class="input-with-action">
+        <svg class="field-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required>
+        <button id="togglePasswordBtn" class="input-action-btn" type="button" title="Show or hide password" aria-label="Toggle password visibility">
+          <svg class="eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
+      </div>
+      <p id="loginError" class="error" role="alert"></p>
+    </div>
+
+    <button id="loginSubmitBtn" class="btn primary btn-lg submit-btn" type="submit">
+      <span class="btn-text">Sign in to Studio</span>
+      <svg class="arrow-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+    <p class="login-hint muted small">Secure local database authentication &bull; HMAC session signed</p>
+  </form>
+</main>
+
+<!-- Main App -->
+<div id="app" hidden>
+  <!-- Top Bar -->
+  <header class="bar">
+    <div class="bar-left">
+      <button id="toggleSidebarBtn" class="btn quiet icon-btn bar-tool-btn" type="button" title="Toggle Sidebar" aria-label="Toggle Sidebar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+      </button>
+
+      <div class="brand-group">
+        <span class="brand-dot pulse"></span>
+        <span class="brand">SetuNxt <span class="brand-sub">Studio</span></span>
+      </div>
+    </div>
+
+    <!-- Center Segmented View Switcher (Desktop & Mobile Responsive) -->
+    <div class="header-center">
+      <nav id="viewSwitcher" class="view-segmented-nav" aria-label="Workspace view">
+        <button id="tabViewPosts" class="view-segment-btn active" type="button" data-view="posts">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+          <span>Posts</span>
+          <span id="navPostBadge" class="nav-count-badge">0</span>
+        </button>
+        <button id="tabViewEditor" class="view-segment-btn" type="button" data-view="editor">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <span>Editor</span>
+        </button>
+        <button id="tabViewPreview" class="view-segment-btn" type="button" data-view="preview">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Live Preview</span>
+        </button>
+      </nav>
+
+      <span id="sync" class="sync" role="status" aria-live="polite">
+        <span class="sync-dot"></span>
+        <span class="sync-text">Live Sync</span>
+      </span>
+      <div id="postCounts" class="post-counts-pill">
+        <span id="postCountTotal" class="count-item" title="Total Posts">10 posts</span>
+      </div>
+    </div>
+
+    <!-- Header Actions -->
+    <div class="header-actions">
+      <div id="userBadge" class="user-badge" title="Logged in admin">
+        <span id="userAvatar" class="user-avatar">A</span>
+        <div class="user-info">
+          <span id="userName" class="user-name">Admin</span>
+          <span id="userRole" class="user-role">admin</span>
+        </div>
+      </div>
+      <a id="headerSiteLink" class="btn quiet header-btn" href="#" target="_blank" rel="noopener" title="Open live blog">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+        <span class="header-btn-text">Live Blog</span>
+      </a>
+      <button id="logout" class="btn quiet header-btn logout-btn" type="button" title="Sign out of admin">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        <span class="header-btn-text">Sign out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Workspace Shell -->
+  <div id="shell" class="shell view-posts">
+    <!-- 1. Post List Sidebar -->
+    <aside id="listPane" class="list" aria-label="Posts">
+      <div class="list-tools">
+        <div class="list-tools-top">
+          <button id="newPost" class="btn primary new-post-btn" type="button">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            <span>Create New Post</span>
+          </button>
+        </div>
+
+        <div class="search-wrapper">
+          <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="postSearch" type="search" placeholder="Search by title, author, category..." autocomplete="off" aria-label="Search posts">
+          <button id="clearSearch" class="clear-search-btn" type="button" hidden title="Clear search" aria-label="Clear search">&times;</button>
+        </div>
+
+        <div class="filter-wrapper">
+          <div class="filter-select-container">
+            <svg class="filter-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+            <label class="sr-only" for="filter">Show</label>
+            <select id="filter" class="filter-select">
+              <option value="all">All posts</option>
+              <option value="draft">Drafts</option>
+              <option value="published">Published</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <ul id="posts" class="posts" role="list"></ul>
+      <div id="listEmpty" class="empty-list pad" hidden>
+        <div class="empty-list-icon">
+          <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        </div>
+        <h3>No posts found</h3>
+        <p class="muted small">No posts matched your current search or filter criteria.</p>
+        <button id="emptyNewPostBtn" class="btn small primary" type="button">Create new post</button>
+      </div>
+    </aside>
+
+    <!-- 2. Editor Pane -->
+    <section id="editorPane" class="editor" aria-label="Editor">
+      <!-- Mobile / Tablet Navigation Header -->
+      <div class="mobile-editor-bar">
+        <button id="mobileBackBtn" class="btn quiet btn-sm mobile-nav-back" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Posts</span>
+        </button>
+        <span id="mobilePostTitlePreview" class="mobile-bar-title">Post Editor</span>
+        <button id="editorPreviewBtn" class="btn btn-sm primary quiet mobile-preview-trigger" type="button">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Preview</span>
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty">
+        <div class="empty-icon-wrap">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+        </div>
+        <h2>Pick a post or start a new one</h2>
+        <p class="muted">Compose rich, compelling stories for SetuNxt. Live previews update automatically as you write, syncing instantly upon publication.</p>
+        <button id="emptyStateNewBtn" class="btn primary btn-lg" type="button">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Start a new post</span>
+        </button>
+      </div>
+
+      <!-- Editor Form -->
+      <form id="editorForm" hidden novalidate>
+        <div id="conflict" class="conflict" role="alert" hidden>
+          <div class="conflict-header">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <strong>Version Conflict Detected</strong>
+          </div>
+          <p>This post was modified in another tab or session. Choose which version you want to preserve.</p>
+          <div class="row conflict-actions">
+            <button id="loadTheirs" class="btn" type="button">Load their version</button>
+            <button id="keepMine" class="btn primary" type="button">Keep my changes</button>
+          </div>
+        </div>
+
+        <div id="archivedNote" class="note note-archived" hidden>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+          <span>This post is archived and cannot be edited.</span>
+        </div>
+
+        <div class="editor-header-meta">
+          <div class="status-indicator-badge" id="editorStatusBadge">
+            <span class="status-dot"></span>
+            <span id="editorStatusText">Draft</span>
+          </div>
+          <span id="statusLine" class="status-line-msg muted small">Draft &bull; not visible on site yet</span>
+        </div>
+
+        <fieldset id="fields">
+          <!-- Post Title -->
+          <div class="field form-group">
+            <div class="field-label-row">
+              <label for="title">Post Title <span class="req-star">*</span></label>
+              <span class="count" id="titleCount">0 / 140</span>
+            </div>
+            <input id="title" maxlength="140" placeholder="e.g. 5 RCS Strategies That Boosted Conversion Rates" autocomplete="off" required>
+            <div class="char-meter-track">
+              <div id="titleMeter" class="char-meter-fill"></div>
+            </div>
+            <div class="meta"><span class="error" data-error-for="title"></span></div>
+          </div>
+
+          <!-- Summary Description -->
+          <div class="field form-group">
+            <div class="field-label-row">
+              <label for="description">Summary Description <span class="req-star">*</span></label>
+              <span class="count" id="descCount">0 / 400</span>
+            </div>
+            <textarea id="description" rows="3" maxlength="400" placeholder="Brief 1-2 sentence overview shown on blog cards and search results..." required></textarea>
+            <div class="char-meter-track">
+              <div id="descMeter" class="char-meter-fill"></div>
+            </div>
+            <div class="meta"><span class="error" data-error-for="description"></span></div>
+          </div>
+
+          <!-- Category & Author Split Row -->
+          <div class="split form-grid-2">
+            <div class="field form-group">
+              <label for="category">Category <span class="req-star">*</span></label>
+              <div class="select-wrapper">
+                <select id="category"></select>
+                <svg class="select-arrow" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              </div>
+              <div class="meta"><span class="error" data-error-for="category"></span></div>
+            </div>
+
+            <div class="field form-group">
+              <label for="author">Author Name</label>
+              <div class="input-with-icon">
+                <svg class="field-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                <input id="author" maxlength="60" placeholder="e.g. SetuNxt Team" autocomplete="off">
+              </div>
+              <div class="meta"><span class="error" data-error-for="author"></span></div>
+            </div>
+          </div>
+
+          <!-- Featured Image Dropzone -->
+          <div class="field form-group">
+            <div class="field-label-row">
+              <span class="label" id="imageLabel">Featured Image <span class="req-star">*</span></span>
+              <span class="hint">500 &times; 300 recommended &bull; WebP / PNG / JPG</span>
+            </div>
+            <input id="imageUrl" type="hidden">
+            <div class="image-box" id="imageDropzone" aria-labelledby="imageLabel">
+              <div class="image-preview-container">
+                <img id="imgPreview" alt="" hidden>
+                <div class="image-drop-prompt" id="imageDropPrompt">
+                  <div class="upload-icon-circle">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  </div>
+                  <p class="upload-prompt-text"><strong>Click to upload</strong> or drag & drop</p>
+                  <p class="muted small">JPEG, PNG or WebP (max 5MB)</p>
+                </div>
+              </div>
+              <div class="image-actions">
+                <label class="btn btn-sm" for="imageFile">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  <span>Choose file</span>
+                </label>
+                <input id="imageFile" class="sr-only" type="file" accept="image/jpeg,image/png,image/webp">
+                <button id="removeImage" class="btn btn-sm quiet danger" type="button" hidden>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                  <span>Remove</span>
+                </button>
+              </div>
+              <p class="muted small" id="imageHint">Uploaded assets are automatically optimized and served in WebP format.</p>
+            </div>
+            <div class="meta"><span class="error" data-error-for="imageUrl"></span></div>
+          </div>
+
+          <!-- Image Alt Text -->
+          <div class="field form-group">
+            <label for="imageAlt">Image Accessibility Alt Text</label>
+            <input id="imageAlt" maxlength="160" placeholder="Describe the image content for screen readers..." autocomplete="off">
+            <div class="meta"><span class="hint">Clear descriptive text for assistive technology</span><span class="error" data-error-for="imageAlt"></span></div>
+          </div>
+
+          <!-- Article Content with Markdown Formatting Toolbar -->
+          <div class="field form-group content-editor-group">
+            <div class="field-label-row">
+              <label for="content">Article Full Body &bull; Markdown Supported</label>
+              <span class="hint" id="contentWordCount">0 words</span>
+            </div>
+
+            <!-- Markdown Toolbar -->
+            <div class="markdown-toolbar" role="toolbar" aria-label="Text formatting">
+              <button type="button" class="toolbar-btn" data-format="bold" title="Bold (**text**)"><strong>B</strong></button>
+              <button type="button" class="toolbar-btn" data-format="italic" title="Italic (*text*)"><em>I</em></button>
+              <button type="button" class="toolbar-btn" data-format="h2" title="Heading 2">H2</button>
+              <button type="button" class="toolbar-btn" data-format="h3" title="Heading 3">H3</button>
+              <span class="toolbar-sep"></span>
+              <button type="button" class="toolbar-btn" data-format="bullet" title="Bullet List (&bull;)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="9" y1="6" x2="20" y2="6"/><line x1="9" y1="12" x2="20" y2="12"/><line x1="9" y1="18" x2="20" y2="18"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
+              </button>
+              <button type="button" class="toolbar-btn" data-format="quote" title="Quote block (&gt;)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 21c3 0 7-1 7-8V5c0-1.25-.756-2.017-2-2H4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/><path d="M15 21c3 0 7-1 7-8V5c0-1.25-.757-2.017-2-2h-4c-1.25 0-2 .75-2 1.972V11c0 1.25.75 2 2 2 1 0 1 0 1 1v1c0 1-1 2-2 2s-1 .008-1 1.031V20c0 1 0 1 1 1z"/></svg>
+              </button>
+              <button type="button" class="toolbar-btn" data-format="link" title="Hyperlink [text](url)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              </button>
+            </div>
+
+            <textarea id="content" rows="7" placeholder="Write full article body paragraphs here... Separate paragraphs with blank lines. Markdown headers (##, ###), bullet lists (*, -), and links are fully formatted. If left empty, a deep-dive article is automatically generated from your title and description."></textarea>
+            <div class="meta"><span class="error" data-error-for="content"></span></div>
+          </div>
+        </fieldset>
+
+        <!-- Sticky Action Dock -->
+        <div class="actions">
+          <button id="saveBtn" class="btn" type="button" title="Save draft (Ctrl+S)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <span>Save draft</span>
+            <kbd class="kbd-hint">Ctrl+S</kbd>
+          </button>
+          <button id="publishBtn" class="btn primary" type="button" title="Publish live (Ctrl+Enter)">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+            <span>Publish</span>
+            <kbd class="kbd-hint">Ctrl+↵</kbd>
+          </button>
+          <span class="spacer"></span>
+          <button id="unpublishBtn" class="btn quiet" type="button" hidden title="Revert to draft">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+            <span>Unpublish</span>
+          </button>
+          <button id="archiveBtn" class="btn quiet danger" type="button" hidden title="Archive post">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="21 8 21 21 3 21 3 8"/><rect x="1" y="3" width="22" height="5"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+            <span>Archive</span>
+          </button>
+        </div>
+      </form>
+    </section>
+
+    <!-- 3. Preview Pane -->
+    <section id="previewPane" class="preview" aria-label="Live preview">
+      <div class="preview-bar">
+        <!-- Preview Type Tabs -->
+        <div class="preview-tabs">
+          <button id="tabCardPreview" class="preview-tab active" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="21" x2="9" y2="9"/></svg>
+            <span>Live Card</span>
+          </button>
+          <button id="tabSitePreview" class="preview-tab" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            <span>Full Site</span>
+          </button>
+        </div>
+
+        <!-- Responsive Device Switcher -->
+        <div class="device-switcher" role="group" aria-label="Device preview mode">
+          <button id="deviceMobile" class="device-btn" type="button" title="Mobile View (375px)" aria-label="Mobile View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </button>
+          <button id="deviceTablet" class="device-btn" type="button" title="Tablet View (640px)" aria-label="Tablet View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </button>
+          <button id="deviceDesktop" class="device-btn active" type="button" title="Desktop View (Full)" aria-label="Desktop View">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+          </button>
+        </div>
+
+        <!-- External Preview Links -->
+        <div class="preview-links">
+          <button id="previewArticleBtn" class="btn btn-sm quiet" type="button" title="Preview the complete article detail page in a new window">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+            <span class="preview-link-text">Article View ↗</span>
+          </button>
+          <a id="openSite" class="small preview-site-link" href="#" target="_blank" rel="noopener">
+            <span>Site ↗</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Preview Viewport Wrapper (Resizable for mobile/tablet preview modes) -->
+      <div id="previewViewportContainer" class="preview-viewport-container mode-desktop">
+        <!-- Built-in Card Preview Canvas -->
+        <div id="cardPreviewContainer" class="card-preview-stage">
+          <div class="preview-badge-pill">
+            <span class="preview-badge-dot"></span>
+            <span>Real-time Grid Card Simulator</span>
+          </div>
+
+          <div class="card-preview-viewport">
+            <article class="mock-card" id="mockCard">
+              <div class="mock-card-img">
+                <img id="mockImg" src="" alt="" hidden>
+                <div class="mock-img-placeholder" id="mockImgPlaceholder">
+                  <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <span>Featured image preview</span>
+                </div>
+                <div class="mock-overlay"></div>
+                <span class="mock-tag" id="mockTag">RCS</span>
+                <button class="mock-bm-btn" type="button" title="Bookmark" aria-label="Bookmark">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+                </button>
+              </div>
+              <div class="mock-card-body">
+                <h3 id="mockTitle" class="mock-title">Untitled post</h3>
+                <p id="mockDesc" class="mock-desc">Add a description to see how your card appears to readers.</p>
+                <div class="mock-card-foot">
+                  <div class="mock-author">
+                    <div class="mock-avatar" id="mockAvatar">ST</div>
+                    <span id="mockAuthorName" class="mock-author-name">SetuNxt Team</span>
+                  </div>
+                  <span class="mock-date" id="mockDate">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span id="mockDateText">Just now</span>
+                  </span>
+                </div>
+              </div>
+            </article>
+          </div>
+          <p class="muted small preview-footer-note">Updates instantly as you type. Outline and styles precisely replicate SetuNxt's production blog cards.</p>
+        </div>
+
+        <!-- Iframe Site Preview -->
+        <div id="sitePreviewContainer" class="site-preview-stage" hidden>
+          <div class="frame-shell">
+            <iframe id="previewFrame" title="Blog page preview" referrerpolicy="no-referrer"></iframe>
+          </div>
+          <p class="muted small pad preview-footer-note">Your post is highlighted in orange on the live page. If the preview stays blank, ensure your SITE_URL dev server is running.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Mobile Bottom Navigation Dock (Visible on mobile screens) -->
+  <nav id="mobileBottomNav" class="mobile-bottom-nav" aria-label="Mobile Navigation">
+    <button id="mobileNavPosts" class="mobile-nav-btn active" type="button" data-view="posts">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+      <span>Posts</span>
+      <span id="mobilePostCountBadge" class="mobile-badge">0</span>
+    </button>
+    <button id="mobileNavEditor" class="mobile-nav-btn" type="button" data-view="editor">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+      <span>Editor</span>
+    </button>
+    <button id="mobileNavPreview" class="mobile-nav-btn" type="button" data-view="preview">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      <span>Preview</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Confirmation Modal -->
+<div id="confirmModal" class="modal-backdrop" hidden>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-icon-wrap" id="modalIconWrap">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </div>
+    <h3 id="modalTitle" class="modal-title">Confirm Action</h3>
+    <p id="modalMessage" class="modal-msg muted">Are you sure you want to proceed?</p>
+    <div class="modal-actions">
+      <button id="modalCancelBtn" class="btn" type="button">Cancel</button>
+      <button id="modalConfirmBtn" class="btn primary" type="button">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast System Notification -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script src="/admin/app.js"></script>
+</body>
+</html>
