@@ -445,7 +445,7 @@ test('Express middleware integration: mounts on Express, calls next() for non-bl
   // 1. Verify non-blog route calls next()
   let nextCalled = false;
   const mockReq = { method: 'GET', url: '/some/unrelated/real-site/route', headers: {} };
-  const mockRes = { setHeader: () => {} };
+  const mockRes = { setHeader: () => { } };
   await middleware(mockReq, mockRes, () => { nextCalled = true; });
   assert.equal(nextCalled, true, 'Non-blog route should pass through via next()');
 
@@ -491,7 +491,7 @@ test('Express middleware integration: mounts on Express, calls next() for non-bl
       user: { _id: 'mongo-admin-1', userName: 'realadmin', fullName: 'Real Admin', userTypeId: 2 },
     };
     const resMock = {
-      setHeader: () => {},
+      setHeader: () => { },
       writeHead: (st) => { assert.equal(st, 200); preAuthCalled = true; },
       end: (b) => {
         const d = JSON.parse(b);
@@ -499,7 +499,7 @@ test('Express middleware integration: mounts on Express, calls next() for non-bl
         assert.equal(d.user.username, 'realadmin');
       }
     };
-    await middleware(reqWithUser, resMock, () => {});
+    await middleware(reqWithUser, resMock, () => { });
     assert.equal(preAuthCalled, true);
   } finally {
     await middleware.engine.close();

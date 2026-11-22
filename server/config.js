@@ -23,10 +23,19 @@ function loadConfig(env = process.env, overrides = {}) {
     }
   }
 
-  let adminPassword = env.ADMIN_PASSWORD;
+  let adminPassword = env.ADMIN_PASSWORD ? env.ADMIN_PASSWORD.trim() : '';
   let generatedPassword = false;
+
   if (!adminPassword) {
-    adminPassword = crypto.randomBytes(9).toString('base64url');
+    // Derive a stable fallback password from the session secret so it
+    // survives restarts and stays consistent with whatever is already
+    // stored in the database.  This is intentionally not a random value
+    // that changes every startup.
+    adminPassword = crypto
+      .createHmac('sha256', secret)
+      .update('admin-password-fallback-v1')
+      .digest('base64url')
+      .slice(0, 16);
     generatedPassword = true;
   }
 

@@ -45,6 +45,17 @@ function createApp(cfg, options = {}) {
   };
 
   // ---------- helpers ----------
+  // Strip internal fields before sending user objects to the client
+  function sanitizeUser(u = {}) {
+    return {
+      id: u.id,
+      username: u.username,
+      name: u.name,
+      email: u.email,
+      role: u.role || 'admin',
+    };
+  }
+
   function corsHeaders(req) {
     const origin = req.headers.origin;
     const base = { 'Access-Control-Expose-Headers': 'ETag', Vary: 'Origin' };
@@ -192,7 +203,7 @@ function createApp(cfg, options = {}) {
     }
     auth.clearFailures(ip);
     const { token, csrf } = auth.issue(user);
-    sendJson(res, 200, { ok: true, csrf, user }, { 'Set-Cookie': auth.setCookie(token) });
+    sendJson(res, 200, { ok: true, csrf, user: sanitizeUser(user) }, { 'Set-Cookie': auth.setCookie(token) });
   });
 
   // Single Sign-On (SSO): exchanges your real website's access token for a blog studio session
@@ -208,7 +219,7 @@ function createApp(cfg, options = {}) {
       });
     }
     const { token: sessionToken, csrf } = auth.issue(user);
-    sendJson(res, 200, { ok: true, csrf, user }, { 'Set-Cookie': auth.setCookie(sessionToken) });
+    sendJson(res, 200, { ok: true, csrf, user: sanitizeUser(user) }, { 'Set-Cookie': auth.setCookie(sessionToken) });
   });
 
   add('GET', '/api/v1/auth/me', ({ req, res }) => {
@@ -243,7 +254,7 @@ function createApp(cfg, options = {}) {
   }, { admin: true });
 
   add('GET', '/api/v1/admin/users', ({ res }) => {
-    sendJson(res, 200, { users: auth.listUsers() });
+    sendJson(res, 200, { users: auth.listUsers().map(sanitizeUser) });
   }, { admin: true });
 
   add('GET', '/api/v1/admin/posts/:id', ({ res, params }) => sendJson(res, 200, store.getAdmin(params.id)), { admin: true });

@@ -70,9 +70,9 @@ function verifyRealSiteJwt(token, secret, adminUserTypeId = 2) {
     name: String(payload.fullName || payload.name || payload.userName || 'Admin'),
     email: String(payload.email || ''),
     role: 'admin',
-    userTypeId: payload.userTypeId,
-    roleId: payload.roleId,
-    source: 'jwt_sso',
+    // keep these only internally for the issue() token — not sent to the client
+    _userTypeId: payload.userTypeId,
+    _roleId: payload.roleId,
   };
 }
 
@@ -98,9 +98,6 @@ async function verifyViaRealSiteApi(username, password, authUrl, adminUserTypeId
       name: String(user.fullName || user.name || username),
       email: String(user.email || ''),
       role: 'admin',
-      userTypeId: user.userTypeId,
-      roleId: user.roleId,
-      source: 'real_site_api',
     };
   } catch {
     return null;
@@ -124,26 +121,49 @@ function createAuth(cfg, db, options = {}) {
       `),
       listUsers: db.prepare('SELECT id, username, name, email, role, created_at, updated_at FROM users ORDER BY created_at ASC'),
       updatePassword: db.prepare('UPDATE users SET password_hash = ?, salt = ?, updated_at = ? WHERE id = ?'),
+      updateUser: db.prepare(`
+        UPDATE users
+        SET username = ?, name = ?, email = ?, password_hash = ?, salt = ?, updated_at = ?
+        WHERE id = ?
+      `),
     };
 
-    // Seed default admin in database if none exists
+    // Seed default admin in database if none exists, or sync with .env
     const count = Number(q.countUsers.get().c);
+    const targetUsername = (cfg.adminUsername || 'admin').trim();
+    const targetName = (cfg.adminName || 'Admin').trim();
+    const targetEmail = (cfg.adminEmail || 'admin@setunxt.com').trim();
+
     if (count === 0) {
       const id = crypto.randomUUID();
-      const username = (cfg.adminUsername || 'admin').trim();
-      const name = (cfg.adminName || 'Admin').trim();
-      const email = (cfg.adminEmail || 'admin@setunxt.com').trim();
       const salt = crypto.randomBytes(16).toString('hex');
       const hash = hashPassword(cfg.adminPassword, salt);
       const now = new Date().toISOString();
-      q.insertUser.run(id, username, name, email, hash, salt, 'admin', now, now);
-    } else if (!cfg.generatedPassword && cfg.adminPassword) {
-      // Keep admin password in database in sync with ADMIN_PASSWORD in .env
-      const adminUser = q.byUsernameOrEmail.get(cfg.adminUsername || 'admin', cfg.adminEmail || 'admin@setunxt.com');
-      if (adminUser && !verifyPasswordHash(cfg.adminPassword, adminUser.password_hash, adminUser.salt)) {
-        const salt = crypto.randomBytes(16).toString('hex');
-        const hash = hashPassword(cfg.adminPassword, salt);
-        q.updatePassword.run(hash, salt, new Date().toISOString(), adminUser.id);
+      q.insertUser.run(id, targetUsername, targetName, targetEmail, hash, salt, 'admin', now, now);
+    } else {
+      // Keep admin credentials and profile in database in sync with .env
+      // (username, name, email, and password).
+      let adminUser = q.byUsernameOrEmail.get(targetUsername, targetEmail);
+      if (!adminUser) {
+        adminUser = q.firstUser.get();
+      }
+
+      if (adminUser) {
+        const passwordMatches = verifyPasswordHash(cfg.adminPassword, adminUser.password_hash, adminUser.salt);
+        const profileMatches = adminUser.username === targetUsername &&
+                               adminUser.name === targetName &&
+                               adminUser.email === targetEmail;
+
+        if (!passwordMatches || !profileMatches) {
+          let hash = adminUser.password_hash;
+          let salt = adminUser.salt;
+          if (!passwordMatches) {
+            salt = crypto.randomBytes(16).toString('hex');
+            hash = hashPassword(cfg.adminPassword, salt);
+          }
+          const now = new Date().toISOString();
+          q.updateUser.run(targetUsername, targetName, targetEmail, hash, salt, now, adminUser.id);
+        }
       }
     }
   }
@@ -184,9 +204,6 @@ function createAuth(cfg, db, options = {}) {
               name: user.fullName || user.userName,
               email: user.email,
               role: 'admin',
-              userTypeId: user.userTypeId,
-              roleId: user.roleId,
-              source: 'mongoose_user_model',
             };
           }
         }
@@ -230,7 +247,6 @@ function createAuth(cfg, db, options = {}) {
       name: row.name,
       email: row.email,
       role: row.role,
-      userTypeId: 2,
     };
   }
 
@@ -250,8 +266,9 @@ function createAuth(cfg, db, options = {}) {
       username: user.username || 'admin',
       name: user.name || 'Admin',
       role: user.role || 'admin',
-      userTypeId: user.userTypeId !== undefined ? user.userTypeId : 2,
-      roleId: user.roleId !== undefined ? user.roleId : null,
+      // _userTypeId/_roleId are internal SSO fields; not sent to client
+      userTypeId: user._userTypeId !== undefined ? user._userTypeId : 2,
+      roleId: user._roleId !== undefined ? user._roleId : null,
       csrf,
       exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
     })).toString('base64url');
@@ -289,11 +306,8 @@ function createAuth(cfg, db, options = {}) {
             username: ssoUser.username,
             name: ssoUser.name,
             role: 'admin',
-            userTypeId: ssoUser.userTypeId,
-            roleId: ssoUser.roleId,
             csrf,
             exp: Math.floor(Date.now() / 1000) + TTL_SECONDS,
-            source: 'jwt_sso',
           };
         }
       }
